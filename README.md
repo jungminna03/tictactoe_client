@@ -1,3 +1,3 @@
 # tictactoe_client
 
-https://github.com/txuna/tictactoe_server의 연결 프로젝트
+https://github.com/txuna/tictactoe_server 의 연결 프로젝트
