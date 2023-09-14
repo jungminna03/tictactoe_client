@@ -32,8 +32,6 @@ public class UI_Login : MonoBehaviour
     {
         byte[] byteData = Util.ClassToByte<LoginReqest>(new LoginReqest(_emailInputField.text, _passwordInputField.text), Define.ClientMsg.Login);
 
-        Debug.Log(byteData);
-
         _emailInputField.text = "";
         _passwordInputField.text = "";
     }

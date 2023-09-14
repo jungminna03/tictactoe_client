@@ -25,7 +25,6 @@ public class Util
         int totalLength = ProtocolLength + LengthLength + byteData.Length;
         byte[] buffer = new byte[totalLength];
 
-        // 데이터 복사
         int currentIndex = 0;
 
         // Protocol 복사
