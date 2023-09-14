@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,11 +30,12 @@ public class UI_Login : MonoBehaviour
 
     public void PressLogInButton()
     {
-        _enteredEmail = _emailInputField.text;
-        _enteredPassword = _passwordInputField.text;
+        byte[] byteData = Util.ClassToByte<LoginReqest>(new LoginReqest(_emailInputField.text, _passwordInputField.text), Define.ClientMsg.Login);
 
-        Debug.Log(_enteredEmail);
-        Debug.Log(_enteredPassword);
+        Debug.Log(byteData);
+
+        _emailInputField.text = "";
+        _passwordInputField.text = "";
     }
 
     public void PressSignInButton()
