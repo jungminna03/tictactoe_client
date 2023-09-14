@@ -15,6 +15,9 @@ public class UI_Login : MonoBehaviour
     [SerializeField]
     Button _signinButton;
 
+    string _enteredEmail;
+    string _enteredPassword;
+
     private void Awake()
     {
         // 버튼들에게 이벤트 자동 바인드
@@ -26,7 +29,11 @@ public class UI_Login : MonoBehaviour
 
     public void PressLogInButton()
     {
+        _enteredEmail = _emailInputField.text;
+        _enteredPassword = _passwordInputField.text;
 
+        Debug.Log(_enteredEmail);
+        Debug.Log(_enteredPassword);
     }
 
     public void PressSignInButton()
