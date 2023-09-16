@@ -30,7 +30,12 @@ public class UI_Login : MonoBehaviour
 
     public void PressLogInButton()
     {
-        byte[] byteData = Util.ClassToByte<LoginReqest>(new LoginReqest(_emailInputField.text, _passwordInputField.text), Define.ClientMsg.Login);
+        byte[] byteData = Util.ClassToByte<LoginReqest>(new LoginReqest()
+                                                        {   
+                                                            email = _emailInputField.text,
+                                                            password = _passwordInputField.text 
+                                                        }, 
+                                                        Define.ClientMsg.Login);
 
         _emailInputField.text = "";
         _passwordInputField.text = "";

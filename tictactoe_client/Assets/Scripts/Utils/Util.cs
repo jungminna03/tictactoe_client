@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
-
+using MessagePack;
+using MessagePack.Resolvers;
+using Unity.VisualScripting;
 
 public class Util
 {
@@ -17,28 +19,19 @@ public class Util
         string strData = JsonUtility.ToJson(data);
 
         // 바이트화
-        byte[] byteProtocol = BitConverter.GetBytes((int)clientMsg);
-        byte[] byteData = Encoding.UTF8.GetBytes(strData);
-        byte[] byteLength = BitConverter.GetBytes(byteData.Length);
+        byte[] byteData = MessagePackSerializer.ConvertFromJson(strData);
 
-        // 결과 바이트 배열 초기화
-        int totalLength = ProtocolLength + LengthLength + byteData.Length;
-        byte[] buffer = new byte[totalLength];
+        // 메세지팩 생성
+        MsgPack msgPack = new MsgPack();
+        msgPack.Protocol = BitConverter.GetBytes((int)clientMsg);
+        msgPack.Length = BitConverter.GetBytes(byteData.Length);
+        msgPack.Data = byteData;
 
-        int currentIndex = 0;
+        byte[] msgPackData = MessagePackSerializer.Serialize(msgPack);
 
-        // Protocol 복사
-        Buffer.BlockCopy(byteProtocol, 0, buffer, currentIndex, ProtocolLength);
-        currentIndex += ProtocolLength;
+        MsgPack temp = MessagePackSerializer.Deserialize<MsgPack>(msgPackData);
 
-        // Length 복사
-        Buffer.BlockCopy(byteLength, 0, buffer, currentIndex, LengthLength);
-        currentIndex += LengthLength;
-
-        // Data 복사
-        Buffer.BlockCopy(byteData, 0, buffer, currentIndex, byteData.Length);
-
-        return buffer;
+        return msgPackData;
     }
 
     public static T ByteToClass<T>(ArraySegment<byte> data) where T : class
