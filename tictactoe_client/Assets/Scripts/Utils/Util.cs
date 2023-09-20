@@ -34,8 +34,10 @@ public class Util
         return msgPackData;
     }
 
-    public static T ByteToClass<T>(ArraySegment<byte> data) where T : class
+    public static T ByteToClass<T>(byte[] data) where T : class
     {
-        return null;
+        T msgPack = MessagePackSerializer.Deserialize<T>(data);
+
+        return msgPack;
     }
 }

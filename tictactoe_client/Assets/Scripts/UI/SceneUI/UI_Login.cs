@@ -39,6 +39,12 @@ public class UI_Login : MonoBehaviour
 
         _emailInputField.text = "";
         _passwordInputField.text = "";
+
+        ServerManager.GetInst().Connect();
+
+        ServerManager.GetInst().Send(byteData);
+
+        ServerManager.GetInst().Close();
     }
 
     public void PressSignInButton()
