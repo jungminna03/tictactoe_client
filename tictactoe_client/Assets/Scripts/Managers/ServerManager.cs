@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using UnityEngine;
 
 public class ServerManager : MonoBehaviour
@@ -27,44 +29,122 @@ public class ServerManager : MonoBehaviour
             }
 
             _instance = go.GetComponent<ServerManager>();
+            _instance.Connect();
         }
+    }
+
+    public static void Clear()
+    {
+        _instance.Disconnect();
     }
     #endregion
 
     Socket _socket;
-    
-    public static void Clear()
-    {
+    int _disconnected = 0;
 
+    Queue<byte[]> _sendQueue = new Queue<byte[]>();
+    SocketAsyncEventArgs _sendArgs;
+    bool _pending = false;
+    object _lock = new object();
+    
+    SocketAsyncEventArgs _recvArgs;
+
+    private void OnApplicationQuit()
+    {
+        Clear();
     }
 
     public void Connect()
     {
         IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9988);
         _socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-       _socket.Connect(endPoint);
-       Debug.Log($"Connected To {_socket.RemoteEndPoint.ToString()}");
+        _socket.Connect(endPoint);
+        Debug.Log($"[Client]Connected To {_socket.RemoteEndPoint.ToString()}");
+
+        _recvArgs = new SocketAsyncEventArgs();
+        _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
+        _recvArgs.SetBuffer(new byte[1024], 0, 1014);
+
+        _sendArgs = new SocketAsyncEventArgs();
+        _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
+
+        RegisterRecv();
+    }
+
+    public void Disconnect()
+    {
+        if (Interlocked.Exchange(ref _disconnected, 1) == 1)
+            return;
+
+        Debug.Log("Disconnected");
+
+        _socket.Shutdown(SocketShutdown.Both);
+        _socket.Close();
     }
 
     public void Send(byte[] sendBuff)
     {
-        int sendBytes = _socket.Send(sendBuff);
-        Debug.Log($"{sendBytes} Bytes send");
+        lock (_lock)
+        {
+            if (_socket.Connected == false)
+                Connect();
+
+            _sendQueue.Enqueue(sendBuff);
+
+            if (_pending == false)
+                RegisterSend();
+        }
     }
 
-    public byte[] Receive()
+    public void RegisterSend()
     {
-        byte[] recvBuff = new byte[1024];
-        int recvBytes = _socket.Receive(recvBuff);
+        _pending = true;
+        byte[] buff = _sendQueue.Dequeue();
+        _sendArgs.SetBuffer(buff, 0, buff.Length);
 
-        Debug.Log($"{recvBytes} Bytes receive");
-
-        return recvBuff;
+        bool pending = _socket.SendAsync(_sendArgs);
+        if (pending == false)
+            OnSendCompleted(null, _sendArgs);
     }
 
-    public void Close()
+    public void OnSendCompleted(object sender, SocketAsyncEventArgs args)
     {
-        _socket.Shutdown(SocketShutdown.Both);
-        _socket.Close();
+        lock (_lock)
+        {
+            if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
+            {
+                if (_sendQueue.Count > 0)
+                    RegisterSend();
+                else
+                    _pending = false;
+            }
+            else
+            {
+                Disconnect();
+            }
+        }
+    }
+
+    void RegisterRecv()
+    {
+        bool pending = _socket.ReceiveAsync(_recvArgs);
+        if (pending == false)
+            OnRecvCompleted(null, _recvArgs);
+    }
+    void OnRecvCompleted(object sender, SocketAsyncEventArgs args)
+    {
+        if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
+        {
+            byte[] recvBuff = new byte[1024];
+            Array.Copy(args.Buffer, recvBuff, args.BytesTransferred);
+
+            Debug.Log(recvBuff);
+        }
+        else
+        {
+            Disconnect();
+        }
+
+        RegisterRecv();
     }
 }

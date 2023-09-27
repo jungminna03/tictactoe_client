@@ -28,7 +28,7 @@ public class ServerTest : MonoBehaviour
     void RegisterAccept(SocketAsyncEventArgs args)
     {
         bool pending = _listenSocket.AcceptAsync(args);
-        if (pending)
+        if (!pending)
             OnAcceptCompleted(null, args);
     }
 
