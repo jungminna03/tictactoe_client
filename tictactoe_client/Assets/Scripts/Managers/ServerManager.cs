@@ -118,10 +118,6 @@ public class ServerManager : MonoBehaviour
                 else
                     _pending = false;
             }
-            else
-            {
-                Disconnect();
-            }
         }
     }
 
@@ -139,10 +135,6 @@ public class ServerManager : MonoBehaviour
             Array.Copy(args.Buffer, recvBuff, args.BytesTransferred);
 
             Debug.Log(recvBuff);
-        }
-        else
-        {
-            Disconnect();
         }
 
         RegisterRecv();
