@@ -28,21 +28,25 @@ public class UI_Login : MonoBehaviour
         _signinButton.onClick.AddListener(PressSignInButton);
     }
 
+    // 로그인 버튼 누를 때 실행할 함수
     public void PressLogInButton()
     {
+        // 로그인 정보 메세지팩으로 제작
         byte[] byteData = Util.ClassToByte<LoginReqest>(new LoginReqest()
                                                         {   
                                                             email = _emailInputField.text,
                                                             password = _passwordInputField.text 
                                                         }, 
                                                         Define.ClientMsg.Login);
-
+        // 인풋 필드 비우기
         _emailInputField.text = "";
         _passwordInputField.text = "";
 
+        // 메세지팩 보내기
         ServerManager.GetInst().Send(byteData);
     }
 
+    // 회원가입 버튼 누를 때 실행할 함수
     public void PressSignInButton()
     {
 

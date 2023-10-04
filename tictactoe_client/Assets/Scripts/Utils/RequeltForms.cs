@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MessagePack;
 
+// ·Î±×ÀÎ
 public class LoginReqest
 {
     public string email;
