@@ -8,6 +8,7 @@ using MessagePack;
 using MessagePack.Resolvers;
 using Unity.VisualScripting;
 using System.Linq;
+using System.Net.Mail;
 
 public class Util
 {
@@ -38,5 +39,18 @@ public class Util
         T msgPack = MessagePackSerializer.Deserialize<T>(data);
 
         return msgPack;
+    }
+
+    public static bool CheckEmailValid(string emailStr)
+    {
+        try
+        {
+            MailAddress email = new MailAddress(emailStr);
+            return email.Address == emailStr;
+        }
+        catch 
+        { 
+            return false;
+        }
     }
 }
