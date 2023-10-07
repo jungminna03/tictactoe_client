@@ -11,6 +11,8 @@ using UnityEngine;
 /// </summary>
 public class ServerManager : MonoBehaviour
 {
+    [SerializeField] GameObject _disconnetedUI;
+
     #region 싱글톤
     static ServerManager _instance = null;
 
@@ -91,7 +93,9 @@ public class ServerManager : MonoBehaviour
     public void Disconnect()
     {
         if (Interlocked.Exchange(ref _disconnected, 1) == 1)
+        {
             return;
+        }
 
         Debug.Log("Disconnected");
 
@@ -109,14 +113,18 @@ public class ServerManager : MonoBehaviour
         {
             // 연결이 안 되어있으면 연결
             if (_socket.Connected == false)
-                Connect();
+            {
+                _disconnetedUI.SetActive(true);
+            }
 
             // 일단 sendQueue에 보낼 버퍼 저장
             _sendQueue.Enqueue(sendBuff);
 
             // send가 등록되지 않았다면(보내는 중이 아니라면) send 등록
             if (_pending == false)
+            {
                 RegisterSend();
+            }
         }
     }
 
@@ -137,7 +145,9 @@ public class ServerManager : MonoBehaviour
 
         bool pending = _socket.SendAsync(_sendArgs);
         if (pending == false)
+        {
             OnSendCompleted(null, _sendArgs);
+        }
     }
 
     /// <summary>
@@ -155,10 +165,13 @@ public class ServerManager : MonoBehaviour
             if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
             {
                 if (_sendQueue.Count > 0)
+                {
                     RegisterSend();
-
+                }
                 else
+                {
                     _pending = false;
+                }
             }
         }
     }
@@ -174,7 +187,9 @@ public class ServerManager : MonoBehaviour
         bool pending = _socket.ReceiveAsync(_recvArgs);
 
         if (pending == false)
+        {
             OnRecvCompleted(null, _recvArgs);
+        }
     }
 
     /// <summary>
