@@ -7,6 +7,7 @@ using UnityEngine;
 using MessagePack;
 using MessagePack.Resolvers;
 using Unity.VisualScripting;
+using System.Linq;
 
 public class Util
 {
@@ -27,11 +28,9 @@ public class Util
         msgPack.Length = BitConverter.GetBytes(byteData.Length);
         msgPack.Data = byteData;
 
-        byte[] msgPackData = MessagePackSerializer.Serialize(msgPack);
+        byte[] sendArray = msgPack.Protocol.Concat(msgPack.Length).Concat(byteData).ToArray();
 
-        MsgPack temp = MessagePackSerializer.Deserialize<MsgPack>(msgPackData);
-
-        return msgPackData;
+        return sendArray;
     }
 
     public static T ByteToClass<T>(byte[] data) where T : class
