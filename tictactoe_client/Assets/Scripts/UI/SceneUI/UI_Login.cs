@@ -16,9 +16,6 @@ public class UI_Login : MonoBehaviour
     [SerializeField]
     Button _signinButton;
 
-    string _enteredEmail;
-    string _enteredPassword;
-
     private void Awake()
     {
         _loginButton.onClick.RemoveAllListeners();
@@ -29,16 +26,26 @@ public class UI_Login : MonoBehaviour
 
     public void PressLogInButton()
     {
-        byte[] byteData = Util.ClassToByte<LoginReqest>(new LoginReqest()
-                                                        {   
-                                                            email = _emailInputField.text,
-                                                            password = _passwordInputField.text 
-                                                        }, 
-                                                        Define.ClientMsg.Login);
+        if (Util.CheckEmailValid(_emailInputField.text))
+        {
+            byte[] byteData = Util.ClassToByte<LoginReqest>(new LoginReqest()
+            {
+                email = _emailInputField.text,
+                password = _passwordInputField.text
+            },
+                                                    Define.ClientMsg.Login);
+
+            ServerManager.GetInst().Send(byteData);
+        }
+        else
+        {
+            Debug.Log($"{_emailInputField.text} was not valied");
+
+            // TODO : °æ°í UI ¶ç¿ì±â 
+        }
+
         _emailInputField.text = "";
         _passwordInputField.text = "";
-
-        ServerManager.GetInst().Send(byteData);
     }
 
     public void PressSignInButton()

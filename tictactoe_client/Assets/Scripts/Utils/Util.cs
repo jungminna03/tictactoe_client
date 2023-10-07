@@ -7,6 +7,8 @@ using UnityEngine;
 using MessagePack;
 using MessagePack.Resolvers;
 using Unity.VisualScripting;
+using System.Linq;
+using System.Net.Mail;
 
 public class Util
 {
@@ -27,11 +29,9 @@ public class Util
         msgPack.Length = BitConverter.GetBytes(byteData.Length);
         msgPack.Data = byteData;
 
-        byte[] msgPackData = MessagePackSerializer.Serialize(msgPack);
+        byte[] sendArray = msgPack.Protocol.Concat(msgPack.Length).Concat(byteData).ToArray();
 
-        MsgPack temp = MessagePackSerializer.Deserialize<MsgPack>(msgPackData);
-
-        return msgPackData;
+        return sendArray;
     }
 
     public static T ByteToClass<T>(byte[] data) where T : class
@@ -39,5 +39,18 @@ public class Util
         T msgPack = MessagePackSerializer.Deserialize<T>(data);
 
         return msgPack;
+    }
+
+    public static bool CheckEmailValid(string emailStr)
+    {
+        try
+        {
+            MailAddress email = new MailAddress(emailStr);
+            return email.Address == emailStr;
+        }
+        catch 
+        { 
+            return false;
+        }
     }
 }
