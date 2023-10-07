@@ -77,7 +77,7 @@ public class ServerManager : MonoBehaviour
 
         _recvArgs = new SocketAsyncEventArgs();
         _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
-        _recvArgs.SetBuffer(new byte[1024], 0, 1014);
+        _recvArgs.SetBuffer(new byte[Constants.SocketBuffer], 0, 1014);
 
 
         _sendArgs = new SocketAsyncEventArgs();
@@ -205,7 +205,7 @@ public class ServerManager : MonoBehaviour
         if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
         {
             // TODO : 델리게이트로 변경
-            byte[] recvBuff = new byte[1024];
+            byte[] recvBuff = new byte[Constants.SocketBuffer];
             Array.Copy(args.Buffer, recvBuff, args.BytesTransferred);
 
             Debug.Log(recvBuff);
