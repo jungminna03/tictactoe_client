@@ -11,6 +11,8 @@ using UnityEngine;
 /// </summary>
 public class Network : MonoBehaviour
 {
+    [SerializeField] GameObject _disconnetedUI;
+
     #region 싱글톤
     static Network _instance = null;
 
@@ -105,7 +107,9 @@ public class Network : MonoBehaviour
     {
         // 연결이 안 되어있으면 연결
         if (_socket.Connected == false)
-            Connect();
+        {
+            _disconnetedUI.SetActive(true);
+        }
 
         // 일단 sendQueue에 보낼 버퍼 저장
         _sendQueue.Enqueue(sendBuff);
