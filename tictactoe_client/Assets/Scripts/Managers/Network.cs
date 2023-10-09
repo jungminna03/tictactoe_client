@@ -46,10 +46,7 @@ public class Network : MonoBehaviour
 
     Socket _socket;
 
-    Queue<byte[]> _sendQueue = new Queue<byte[]>();
     SocketAsyncEventArgs _sendArgs;
-    bool _pending = false;
-    
     SocketAsyncEventArgs _recvArgs;
 
     private void Awake()
@@ -74,10 +71,17 @@ public class Network : MonoBehaviour
     {
         IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 9988);
         _socket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        _socket.Connect(endPoint);
-        Debug.Log($"[Client]Connected To {_socket.RemoteEndPoint.ToString()}");
 
-
+        try
+        {
+            _socket.Connect(endPoint);
+            Debug.Log($"[Client]Connected To {_socket.RemoteEndPoint.ToString()}");
+        }
+        catch (Exception e)
+        {
+            // TODO : 알림창 띄우고 종료
+        }
+        
         _recvArgs = new SocketAsyncEventArgs();
         _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
         _recvArgs.SetBuffer(new byte[1024], 0, 1014);
@@ -100,40 +104,17 @@ public class Network : MonoBehaviour
     }
 
     /// <summary>
-    /// 서버에게 Send할 버퍼를 받음
+    /// 서버에게 비동기 형식으로 send를 함
     /// </summary>
     /// <param name="sendBuff">보낼 버퍼</param>
     public void Send(byte[] sendBuff)
     {
-        // 연결이 안 되어있으면 연결
         if (_socket.Connected == false)
         {
             _disconnetedUI.SetActive(true);
         }
 
-        // 일단 sendQueue에 보낼 버퍼 저장
-        _sendQueue.Enqueue(sendBuff);
-
-        // send가 등록되지 않았다면(보내는 중이 아니라면) send 등록
-        if (_pending == false)
-        {
-            RegisterSend();
-        }
-    }
-
-    /// <summary>
-    /// <para>
-    /// 외부에 공개되지 않고 자동으로 처리됨
-    /// </para>
-    /// 비동기식 Send를 등록
-    /// </summary>
-    void RegisterSend()
-    {
-        _pending = true;
-
-
-        byte[] buff = _sendQueue.Dequeue();
-        _sendArgs.SetBuffer(buff, 0, buff.Length);
+        _sendArgs.SetBuffer(sendBuff, 0, sendBuff.Length);
 
 
         bool pending = _socket.SendAsync(_sendArgs);
@@ -155,15 +136,7 @@ public class Network : MonoBehaviour
     {
         if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
         {
-            if (_sendQueue.Count > 0)
-            {
-                RegisterSend();
-            }
 
-            else
-            {
-                _pending = false;
-            }
         }
     }
 
