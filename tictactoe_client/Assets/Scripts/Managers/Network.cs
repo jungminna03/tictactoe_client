@@ -49,10 +49,6 @@ public class Network : MonoBehaviour
     SocketAsyncEventArgs _sendArgs;
     SocketAsyncEventArgs _recvArgs;
 
-    private void Awake()
-    {
-        Connect();
-    }
 
     private void OnApplicationQuit()
     {
@@ -80,6 +76,7 @@ public class Network : MonoBehaviour
         catch (Exception e)
         {
             // TODO : 알림창 띄우고 종료
+            Debug.LogException(e);
         }
         
         _recvArgs = new SocketAsyncEventArgs();
