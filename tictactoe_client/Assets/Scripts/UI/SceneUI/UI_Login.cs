@@ -35,7 +35,7 @@ public class UI_Login : MonoBehaviour
             },
                                                     Define.ClientMsg.Login);
 
-            ServerManager.GetInst().Send(byteData);
+            Network.GetInst().Send(byteData);
         }
         else
         {

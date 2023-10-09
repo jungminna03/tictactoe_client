@@ -9,14 +9,12 @@ using UnityEngine;
 /// <summary>
 /// 서버에 연결, 해제 및 Send, Recv를 해줌
 /// </summary>
-public class ServerManager : MonoBehaviour
+public class Network : MonoBehaviour
 {
-    [SerializeField] GameObject _disconnetedUI;
-
     #region 싱글톤
-    static ServerManager _instance = null;
+    static Network _instance = null;
 
-    public static ServerManager GetInst()
+    public static Network GetInst()
     {
         Init();
         return _instance;
@@ -30,10 +28,10 @@ public class ServerManager : MonoBehaviour
             if (go == null)
             {
                 go = new GameObject() { name = "@ServerManger" };
-                go.AddComponent<ServerManager>();
+                go.AddComponent<Network>();
             }
 
-            _instance = go.GetComponent<ServerManager>();
+            _instance = go.GetComponent<Network>();
             _instance.Connect();
         }
     }
@@ -45,14 +43,17 @@ public class ServerManager : MonoBehaviour
     #endregion
 
     Socket _socket;
-    int _disconnected = 0;
 
     Queue<byte[]> _sendQueue = new Queue<byte[]>();
     SocketAsyncEventArgs _sendArgs;
     bool _pending = false;
-    object _lock = new object();
     
     SocketAsyncEventArgs _recvArgs;
+
+    private void Awake()
+    {
+        Connect();
+    }
 
     private void OnApplicationQuit()
     {
@@ -77,7 +78,7 @@ public class ServerManager : MonoBehaviour
 
         _recvArgs = new SocketAsyncEventArgs();
         _recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnRecvCompleted);
-        _recvArgs.SetBuffer(new byte[Constants.SocketBuffer], 0, 1014);
+        _recvArgs.SetBuffer(new byte[1024], 0, 1014);
 
 
         _sendArgs = new SocketAsyncEventArgs();
@@ -92,13 +93,6 @@ public class ServerManager : MonoBehaviour
     /// </summary>
     public void Disconnect()
     {
-        if (Interlocked.Exchange(ref _disconnected, 1) == 1)
-        {
-            return;
-        }
-
-        Debug.Log("Disconnected");
-
         _socket.Shutdown(SocketShutdown.Both);
         _socket.Close();
     }
@@ -109,22 +103,17 @@ public class ServerManager : MonoBehaviour
     /// <param name="sendBuff">보낼 버퍼</param>
     public void Send(byte[] sendBuff)
     {
-        lock (_lock)
+        // 연결이 안 되어있으면 연결
+        if (_socket.Connected == false)
+            Connect();
+
+        // 일단 sendQueue에 보낼 버퍼 저장
+        _sendQueue.Enqueue(sendBuff);
+
+        // send가 등록되지 않았다면(보내는 중이 아니라면) send 등록
+        if (_pending == false)
         {
-            // 연결이 안 되어있으면 연결
-            if (_socket.Connected == false)
-            {
-                _disconnetedUI.SetActive(true);
-            }
-
-            // 일단 sendQueue에 보낼 버퍼 저장
-            _sendQueue.Enqueue(sendBuff);
-
-            // send가 등록되지 않았다면(보내는 중이 아니라면) send 등록
-            if (_pending == false)
-            {
-                RegisterSend();
-            }
+            RegisterSend();
         }
     }
 
@@ -160,18 +149,16 @@ public class ServerManager : MonoBehaviour
     /// <param name="args">이벤트의 종류 및 자세한 정보</param>
     void OnSendCompleted(object sender, SocketAsyncEventArgs args)
     {
-        lock (_lock)
+        if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
         {
-            if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
+            if (_sendQueue.Count > 0)
             {
-                if (_sendQueue.Count > 0)
-                {
-                    RegisterSend();
-                }
-                else
-                {
-                    _pending = false;
-                }
+                RegisterSend();
+            }
+
+            else
+            {
+                _pending = false;
             }
         }
     }
@@ -205,7 +192,7 @@ public class ServerManager : MonoBehaviour
         if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
         {
             // TODO : 델리게이트로 변경
-            byte[] recvBuff = new byte[Constants.SocketBuffer];
+            byte[] recvBuff = new byte[1024];
             Array.Copy(args.Buffer, recvBuff, args.BytesTransferred);
 
             Debug.Log(recvBuff);
